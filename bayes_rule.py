@@ -116,24 +116,41 @@ class Search:
             self.p2 = 0
             self.p3 = 0
 
+    def get_psep(self):
+        """Return random planned search effectiveness probability."""
+        return random.triangular(0.1, 0.9)
 
-def draw_menu(search_num):
-    """Print menu of choices for conducting area searches."""
+    def get_all_psep(self):
+        """Return random planned search effectiveness probabilities for all areas."""
+        return self.get_psep(), self.get_psep(), self.get_psep()
+
+
+def draw_menu(search_num, p1, p2, p3):
+    """Print menu of choices for conducting area searches, added probability of detection under each option."""
     print(f'\nSearch {search_num}')
     print(
-        """
+        f"""
         Choose next areas to search:
         
-        0 - Quit
+        0 - Quit\n
         1 - Search Area 1 twice
+          Probability of detection = {1 - (1 - p1) ** 2}\n
         2 - Search Area 2 twice
+          Probability of detection = {1 - (1 - p2) ** 2}\n
         3 - Search Area 3 twice
+          Probability of detection = {1 - (1 - p3) ** 2}\n
         4 - Search Area 1 & 2
+          Probability of detection = {p1 + p2}\n
         5 - Search Area 1 & 3
+          Probability of detection = {p1 + p3}\n
         6 - Search Area 2 & 3
+          Probability of detection = {p2 + p3}\n
         7 - Start Over
         """
     )
+
+
+
 
 
 def main():
@@ -141,11 +158,17 @@ def main():
     app.draw_map(last_known=(160, 290))
     sailor_x, sailor_y = app.sailor_final_location(num_search_areas=3)
     print('-' * 65)
-    print('\nInitial Target (P) Probabilities:')
+    app.psep1, app.psep2, app.psep3 = app.get_all_psep()
+    app.p1 *= app.psep1
+    app.p2 *= app.psep2
+    app.p3 *= app.psep3
+    print('\nSearch Effectiveness Probabilities:')
+    print(f"E1 = {app.psep1}, E2 = {app.psep2}, E3 = {app.psep3}")  # psep = planned search effectiveness probability
+    print('\nTarget (P) Probabilities after taking weather into account:')
     print(f"P1 = {app.p1}, P2 = {app.p2}, P3 = {app.p3}")
+
     search_num = 1
     coords_1, coords_2, coords_3 = [], [], []
-    app.sep1, app.sep2, app.sep3 = 0, 0, 0  # Current search effectiveness
     prev_sep1, prev_sep2, prev_sep3 = 0, 0, 0  # Search effectiveness from previous search to remember through the loop
     """
     app.sep1 = prev_sep1  # Set search effectiveness for next search to previous search effectiveness
@@ -153,15 +176,15 @@ def main():
     """
     while True:
         app.calc_search_effectiveness()
-        draw_menu(search_num)
+        draw_menu(search_num, app.p1, app.p2, app.p3)
         choice = input('Enter choice: ')
 
         if choice == '0':
             sys.exit()
         elif choice == '1':
-            results_1, coords_1 = app.conduct_search(1, app.sa1, app.sep1, coords_1)
+            results_1, coords_1 = app.conduct_search(1, app.sa1, app.psep1, coords_1)
             coords = coords_1
-            results_2, coords_1 = app.conduct_search(1, app.sa1, app.sep1, coords_1)
+            results_2, coords_1 = app.conduct_search(1, app.sa1, app.psep1, coords_1)
             if coords_1 == 1:  # If all coordinates have been searched, set search effectiveness to 1.0
                 app.sep1 = 1.0
             else:
@@ -170,9 +193,9 @@ def main():
             app.sep2 = prev_sep2
             app.sep3 = prev_sep3
         elif choice == '2':
-            results_1, coords_2 = app.conduct_search(2, app.sa2, app.sep2, coords_2)
+            results_1, coords_2 = app.conduct_search(2, app.sa2, app.psep2, coords_2)
             coords = coords_2
-            results_2, coords_2 = app.conduct_search(2, app.sa2, app.sep2, coords_2)
+            results_2, coords_2 = app.conduct_search(2, app.sa2, app.psep2, coords_2)
             if coords_2 == 1:
                 app.sep2 = 1.0
             else:
@@ -181,9 +204,9 @@ def main():
             app.sep1 = prev_sep1
             app.sep3 = prev_sep3
         elif choice == '3':
-            results_1, coords_3 = app.conduct_search(3, app.sa3, app.sep3, coords_3)
+            results_1, coords_3 = app.conduct_search(3, app.sa3, app.psep3, coords_3)
             coords = coords_3
-            results_2, coords_3 = app.conduct_search(3, app.sa3, app.sep3, coords_3)
+            results_2, coords_3 = app.conduct_search(3, app.sa3, app.psep3, coords_3)
             if coords_3 == 1:  # If all coordinates have been searched, set search effectiveness to 1.0
                 app.sep3 = 1.0
             else:
@@ -192,30 +215,30 @@ def main():
             app.sep1 = prev_sep1
             app.sep2 = prev_sep2
         elif choice == '4':
-            results_1, coords_1 = app.conduct_search(1, app.sa1, app.sep1, coords_1)
+            results_1, coords_1 = app.conduct_search(1, app.sa1, app.psep1, coords_1)
             if coords_1 == 1:  # If all coordinates have been searched, set search effectiveness to 1.0
                 app.sep1 = 1.0
-            results_2, coords_2 = app.conduct_search(2, app.sa2, app.sep2, coords_2)
+            results_2, coords_2 = app.conduct_search(2, app.sa2, app.psep2, coords_2)
             if coords_2 == 1:  # If all coordinates have been searched, set search effectiveness to 1.0
                 app.sep2 = 1.0
             prev_sep1 = app.sep1
             prev_sep2 = app.sep2
             app.sep3 = prev_sep3
         elif choice == '5':
-            results_1, coords_1 = app.conduct_search(1, app.sa1, app.sep1, coords_1)
+            results_1, coords_1 = app.conduct_search(1, app.sa1, app.psep1, coords_1)
             if coords_1 == 1:  # If all coordinates have been searched, set search effectiveness to 1.0
                 app.sep1 = 1.0
-            results_2, coords_3 = app.conduct_search(3, app.sa3, app.sep3, coords_3)
+            results_2, coords_3 = app.conduct_search(3, app.sa3, app.psep3, coords_3)
             if coords_3 == 1:  # If all coordinates have been searched, set search effectiveness to 1.0
                 app.sep3 = 1.0
             prev_sep1 = app.sep1
             prev_sep3 = app.sep3
             app.sep2 = prev_sep2
         elif choice == '6':
-            results_1, coords_2 = app.conduct_search(2, app.sa2, app.sep2, coords_2)
+            results_1, coords_2 = app.conduct_search(2, app.sa2, app.psep2, coords_2)
             if coords_2 == 1:  # If all coordinates have been searched, set search effectiveness to 1.0
                 app.sep2 = 1.0
-            results_2, coords_3 = app.conduct_search(3, app.sa3, app.sep3, coords_3)
+            results_2, coords_3 = app.conduct_search(3, app.sa3, app.psep3, coords_3)
             if coords_3 == 1:  # If all coordinates have been searched, set search effectiveness to 1.0
                 app.sep1 = 1.0
             app.sep1 = prev_sep1
@@ -229,13 +252,18 @@ def main():
 
         app.revise_target_probs()  # Use BAYES' RULE to update target probabilities
 
-        print(f"\nSearch {search_num} Results 1 = {results_1}", file=sys.stderr)
-        print(f"Search {search_num} Results 2 = {results_2}\n", file=sys.stderr)
-        print(f"Search {search_num} Effectiveness (E):")
+        print(f"\nSearch {search_num} Results 1 = {results_1}")
+        print(f"Search {search_num} Results 2 = {results_2}\n")
+        print(f"Actual Search {search_num} Effectiveness (E):")
         print(f"E1 = {app.sep1}, E2 = {app.sep2}, E3 = {app.sep3}")
 
         if results_1 == 'Not found' and results_2 == 'Not found':
-            print(f'New Target Probabilities (P) for Search {search_num + 1}:')
+            app.psep1, app.psep2, app.psep3 = app.get_all_psep()
+            app.p1 *= app.psep1
+            app.p2 *= app.psep2
+            app.p3 *= app.psep3
+            print(f'New Planned Search Effectiveness and Target Probabilities (P) for Search {search_num + 1}:')
+            print(f"E1 = {app.psep1}, E2 = {app.psep2}, E3 = {app.psep3}")
             print(f"P1 = {app.p1}, P2 = {app.p2}, P3 = {app.p3}")
         else:
             cv.circle(app.img, (int(sailor_x), int(sailor_y)), 3, (255, 0, 0), -1)
