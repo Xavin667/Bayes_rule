@@ -107,9 +107,14 @@ class Search:
     def revise_target_probs(self):
         """Update area target probabilities based on search effectiveness."""
         denom = self.p1 * (1 - self.sep1) + self.p2 * (1 - self.sep2) + self.p3 * (1 - self.sep3)
-        self.p1 = self.p1 * (1 - self.sep1) / denom
-        self.p2 = self.p2 * (1 - self.sep2) / denom
-        self.p3 = self.p3 * (1 - self.sep3) / denom
+        if denom != 0:
+            self.p1 = self.p1 * (1 - self.sep1) / denom
+            self.p2 = self.p2 * (1 - self.sep2) / denom
+            self.p3 = self.p3 * (1 - self.sep3) / denom
+        if denom == 0:
+            self.p1 = 0
+            self.p2 = 0
+            self.p3 = 0
 
 
 def draw_menu(search_num):
